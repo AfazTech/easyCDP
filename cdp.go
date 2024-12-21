@@ -12,14 +12,13 @@ type Browser struct {
 	cancel context.CancelFunc
 }
 
-func NewBrowser(headless bool) *Browser {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("guest", true),
-		chromedp.Flag("window-size", "1920,1080"),
-		chromedp.Flag("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"),
-	)
-	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
+type Flag struct {
+	Key   string
+	Value interface{}
+}
+
+func NewBrowser(options []Flag) *Browser {
+	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), handleFlags(options)...)
 	ctx, cancelFunc := chromedp.NewContext(allocCtx)
 	return &Browser{
 		ctx:    ctx,
@@ -31,6 +30,13 @@ func (b *Browser) Navigate(url string) error {
 	return chromedp.Run(b.ctx, chromedp.Navigate(url))
 }
 
+func handleFlags(flags []Flag) []chromedp.ExecAllocatorOption {
+	opt := append(chromedp.DefaultExecAllocatorOptions[:])
+	for _, flag := range flags {
+		opt = append(opt, chromedp.Flag(flag.Key, flag.Value))
+	}
+	return opt
+}
 func (b *Browser) Screenshot(filename string) error {
 	var buf []byte
 	err := chromedp.Run(b.ctx, chromedp.Screenshot("html", &buf, chromedp.NodeVisible, chromedp.ByQuery))
