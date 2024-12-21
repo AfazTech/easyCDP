@@ -105,3 +105,30 @@ func (b *Browser) Evaluate(expression string, res interface{}) error {
 func (b *Browser) Reload() error {
 	return b.Run(chromedp.Reload())
 }
+func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		var exists bool
+		err := b.Run(chromedp.Evaluate(fmt.Sprintf("document.querySelector('%s') !== null", selector), &exists))
+		if err != nil {
+			return false, err
+		}
+
+		if exists {
+			var isVisible bool
+			err = b.Run(chromedp.Evaluate(fmt.Sprintf("document.querySelector('%s').offsetWidth > 0 && document.querySelector('%s').offsetHeight > 0", selector, selector), &isVisible))
+			if err != nil {
+				return false, err
+			}
+
+			if isVisible {
+				return true, nil
+			}
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return false, nil
+}

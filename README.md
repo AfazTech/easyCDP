@@ -116,6 +116,9 @@ Sets the value of the specified input field.
 #### `Evaluate(expression string, res interface{}) error`
 Evaluates a JavaScript expression and stores the result in the provided variable.
 
+#### `WaitVisible(selector string, timeout time.Duration)  (bool, error)`
+Waits for the specified element to become visible within the given timeout duration. Returns true if the element is visible, otherwise returns false.
+
 #### `Reload() error`
 Reloads the current page.
 
