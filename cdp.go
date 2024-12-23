@@ -2,6 +2,7 @@ package cdp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -136,6 +137,8 @@ func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, err
 	return false, nil
 }
 func (b *Browser) SetCookie(name, value, domain, path string, httpOnly, secure bool) error {
+	logger.Debugf("Setting cookie: Name=%s, Value=%s, Domain=%s, Path=%s, HTTPOnly=%t, Secure=%t\n",
+		name, value, domain, path, httpOnly, secure) // Detailed message about the cookie being set
 	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
 		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
 		err := network.SetCookie(name, value).
@@ -145,22 +148,60 @@ func (b *Browser) SetCookie(name, value, domain, path string, httpOnly, secure b
 			WithHTTPOnly(httpOnly).
 			WithSecure(secure).
 			Do(ctx)
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	}))
 }
 
-func (b *Browser) ShowCookies() error {
-	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
-		cookies, err := network.GetCookies().Do(ctx)
+func (b *Browser) GetCookies() ([]*network.Cookie, error) {
+	var cookies []*network.Cookie
+	err := b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
+		var err error
+		cookies, err = network.GetCookies().Do(ctx)
+		return err
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return cookies, nil
+}
+
+func (b *Browser) LoadCookies(filename string) error {
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	var cookies []*network.Cookie
+	err = json.Unmarshal(file, &cookies)
+	if err != nil {
+		return err
+	}
+
+	for _, cookie := range cookies {
+		err := b.SetCookie(cookie.Name, cookie.Value, cookie.Domain, cookie.Path, cookie.HTTPOnly, cookie.Secure)
 		if err != nil {
 			return err
 		}
-		for i, cookie := range cookies {
-			logger.Debugf("chrome cookie %d: %+v", i, cookie)
-		}
-		return nil
-	}))
+	}
+
+	return nil
+}
+
+func (b *Browser) SaveCookies(filename string) error {
+	cookies, err := b.GetCookies()
+	if err != nil {
+		return err
+	}
+
+	cookiesJSON, err := json.MarshalIndent(cookies, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filename, cookiesJSON, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
