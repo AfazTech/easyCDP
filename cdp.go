@@ -6,7 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
+	"github.com/imafaz/logger"
 )
 
 type Browser struct {
@@ -131,4 +134,33 @@ func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, err
 	}
 
 	return false, nil
+}
+func (b *Browser) SetCookie(name, value, domain, path string, httpOnly, secure bool) error {
+	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
+		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
+		err := network.SetCookie(name, value).
+			WithExpires(&expr).
+			WithDomain(domain).
+			WithPath(path).
+			WithHTTPOnly(httpOnly).
+			WithSecure(secure).
+			Do(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}))
+}
+
+func (b *Browser) ShowCookies() error {
+	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
+		cookies, err := network.GetCookies().Do(ctx)
+		if err != nil {
+			return err
+		}
+		for i, cookie := range cookies {
+			logger.Debugf("chrome cookie %d: %+v", i, cookie)
+		}
+		return nil
+	}))
 }

@@ -3,7 +3,7 @@ module github.com/imafaz/cdp
 go 1.23.3
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20241208230723-d1c7de7e5dd2 // indirect
+	github.com/chromedp/cdproto v0.0.0-20241222144035-c16d098c0fb6 // indirect
 	github.com/chromedp/chromedp v0.11.2 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
