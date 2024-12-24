@@ -2,11 +2,14 @@ package cdp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/network"
+
 	"github.com/chromedp/chromedp"
 )
 
@@ -150,32 +153,50 @@ func (b *Browser) GetCookies() ([]*network.Cookie, error) {
 	return cookies, nil
 }
 
-func (b *Browser) SetCookies(cookies []*network.Cookie) error {
-	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
-		for _, cookie := range cookies {
-			if err := network.SetCookie(cookie.Name, cookie.Value).Do(ctx); err != nil {
-				return err
-			}
-		}
-		return nil
-	}))
+func (b *Browser) SaveCookies(filename string) error {
+	cookies, err := b.GetCookies()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(cookies)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filename, data, 0644)
 }
 
-// func (b *Browser) SaveCookies(filename string) error {
-// 	cookies, err := b.GetCookies()
-// 	if err != nil {
-// 		return err
-// 	}
+func (b *Browser) LoadCookies(filename string) error {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
 
-// 	cookiesJSON, err := json.MarshalIndent(cookies, "", "  ")
-// 	if err != nil {
-// 		return err
-// 	}
+	var cookies []*network.Cookie
+	if err := json.Unmarshal(data, &cookies); err != nil {
+		return err
+	}
 
-// 	err = os.WriteFile(filename, cookiesJSON, 0644)
-// 	if err != nil {
-// 		return err
-// 	}
+	cookieParams := make([]*network.CookieParam, len(cookies))
+	for i, cookie := range cookies {
+		var expires *cdp.TimeSinceEpoch
+		if cookie.Expires > 0 {
+			exp := cdp.TimeSinceEpoch(time.Unix(int64(cookie.Expires), 0))
+			expires = &exp
+		}
 
-// 	return nil
-// }
+		cookieParams[i] = &network.CookieParam{
+			Name:     cookie.Name,
+			Value:    cookie.Value,
+			Domain:   cookie.Domain,
+			Path:     cookie.Path,
+			Expires:  expires,
+			Secure:   cookie.Secure,
+			HTTPOnly: cookie.HTTPOnly,
+			SameSite: cookie.SameSite,
+		}
+	}
+
+	return b.Run(network.SetCookies(cookieParams))
+}
