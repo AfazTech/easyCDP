@@ -2,15 +2,12 @@ package cdp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
-	"github.com/imafaz/logger"
 )
 
 type Browser struct {
@@ -85,14 +82,17 @@ func (b *Browser) WaitForLoad(timeout time.Duration) (bool, error) {
 
 	return false, nil
 }
-func (b *Browser) TextExists(text string) (bool, error) {
-	var isTextVisible bool
-	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`document.body.innerText.includes('%s')`, text), &isTextVisible))
-	if err != nil {
-		return false, err
-	}
-	return isTextVisible, nil
-}
+
+// fix
+//
+//	func (b *Browser) TextExists(text string) (bool, error) {
+//		var isTextVisible bool
+//		err := b.Run(chromedp.Evaluate(fmt.Sprintf(`document.body.innerText.includes('%s')`, text), &isTextVisible))
+//		if err != nil {
+//			return false, err
+//		}
+//		return isTextVisible, nil
+//	}
 func (b *Browser) Click(selector string) error {
 	return b.Run(chromedp.Click(selector, chromedp.ByQuery))
 }
@@ -136,21 +136,6 @@ func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, err
 
 	return false, nil
 }
-func (b *Browser) SetCookie(name, value, domain, path string, httpOnly, secure bool) error {
-	logger.Debugf("Setting cookie: Name=%s, Value=%s, Domain=%s, Path=%s, HTTPOnly=%t, Secure=%t\n",
-		name, value, domain, path, httpOnly, secure) // Detailed message about the cookie being set
-	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
-		expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
-		err := network.SetCookie(name, value).
-			WithExpires(&expr).
-			WithDomain(domain).
-			WithPath(path).
-			WithHTTPOnly(httpOnly).
-			WithSecure(secure).
-			Do(ctx)
-		return err
-	}))
-}
 
 func (b *Browser) GetCookies() ([]*network.Cookie, error) {
 	var cookies []*network.Cookie
@@ -165,43 +150,32 @@ func (b *Browser) GetCookies() ([]*network.Cookie, error) {
 	return cookies, nil
 }
 
-func (b *Browser) LoadCookies(filename string) error {
-	file, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-
-	var cookies []*network.Cookie
-	err = json.Unmarshal(file, &cookies)
-	if err != nil {
-		return err
-	}
-
-	for _, cookie := range cookies {
-		err := b.SetCookie(cookie.Name, cookie.Value, cookie.Domain, cookie.Path, cookie.HTTPOnly, cookie.Secure)
-		if err != nil {
-			return err
+func (b *Browser) SetCookies(cookies []*network.Cookie) error {
+	return b.Run(chromedp.ActionFunc(func(ctx context.Context) error {
+		for _, cookie := range cookies {
+			if err := network.SetCookie(cookie.Name, cookie.Value).Do(ctx); err != nil {
+				return err
+			}
 		}
-	}
-
-	return nil
+		return nil
+	}))
 }
 
-func (b *Browser) SaveCookies(filename string) error {
-	cookies, err := b.GetCookies()
-	if err != nil {
-		return err
-	}
+// func (b *Browser) SaveCookies(filename string) error {
+// 	cookies, err := b.GetCookies()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	cookiesJSON, err := json.MarshalIndent(cookies, "", "  ")
-	if err != nil {
-		return err
-	}
+// 	cookiesJSON, err := json.MarshalIndent(cookies, "", "  ")
+// 	if err != nil {
+// 		return err
+// 	}
 
-	err = os.WriteFile(filename, cookiesJSON, 0644)
-	if err != nil {
-		return err
-	}
+// 	err = os.WriteFile(filename, cookiesJSON, 0644)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
