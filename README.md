@@ -18,7 +18,9 @@
 - Check for element existence
 - Wait for page load completion
 - Check for text visibility on the page
-- Equipped with chromdp methods
+- Take screenshots of the current page
+- Manage cookies: get, save, and load cookies
+- Equipped with chromedp methods
 - Future improvements: Simplifying functions and supporting multiple browser instances
 
 ### Prerequisites
@@ -101,9 +103,6 @@ Checks if an element exists on the page.
 #### `WaitForLoad(timeout time.Duration) (bool, error)`
 Waits for the page to load completely within the specified timeout.
 
-#### `TextExists(text string) (bool, error)`
-Checks if the specified text is visible on the page.
-
 #### `Click(selector string) error`
 Clicks on the specified element.
 
@@ -116,11 +115,20 @@ Sets the value of the specified input field.
 #### `Evaluate(expression string, res interface{}) error`
 Evaluates a JavaScript expression and stores the result in the provided variable.
 
-#### `WaitVisible(selector string, timeout time.Duration)  (bool, error)`
+#### `WaitVisible(selector string, timeout time.Duration) (bool, error)`
 Waits for the specified element to become visible within the given timeout duration. Returns true if the element is visible, otherwise returns false.
 
 #### `Reload() error`
 Reloads the current page.
+
+#### `GetCookies() ([]*network.Cookie, error)`
+Retrieves the cookies from the current browser session.
+
+#### `SaveCookies(filename string) error`
+Saves the current cookies to a specified file in JSON format.
+
+#### `LoadCookies(filename string) error`
+Loads cookies from a specified file and sets them in the current browser session.
 
 ### TODO:
 - [ ] Add more comprehensive error handling
