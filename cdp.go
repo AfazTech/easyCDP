@@ -86,16 +86,26 @@ func (b *Browser) WaitForLoad(timeout time.Duration) (bool, error) {
 	return false, nil
 }
 
-// fix
-//
-//	func (b *Browser) TextExists(text string) (bool, error) {
-//		var isTextVisible bool
-//		err := b.Run(chromedp.Evaluate(fmt.Sprintf(`document.body.innerText.includes('%s')`, text), &isTextVisible))
-//		if err != nil {
-//			return false, err
-//		}
-//		return isTextVisible, nil
-//	}
+func (b *Browser) WaitForJSLoad(timeout time.Duration) (bool, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		var onloadExecuted bool
+		err := b.Run(chromedp.Evaluate("window.onload !== null", &onloadExecuted))
+		if err != nil {
+			return false, err
+		}
+
+		if onloadExecuted {
+			return true, nil
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return false, nil
+}
+
 func (b *Browser) Click(selector string) error {
 	return b.Run(chromedp.Click(selector, chromedp.ByQuery))
 }
