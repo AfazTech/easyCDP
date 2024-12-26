@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/cdp"
@@ -209,4 +210,20 @@ func (b *Browser) LoadCookies(filename string) error {
 	}
 
 	return b.Run(network.SetCookies(cookieParams))
+}
+func (b *Browser) Text(selector string) (string, error) {
+	var textContent string
+	err := b.Run(chromedp.Text(selector, &textContent, chromedp.NodeVisible, chromedp.ByQuery))
+	if err != nil {
+		return "", err
+	}
+	return textContent, nil
+}
+func (b *Browser) TextExists(text string) (bool, error) {
+	var bodyText string
+	err := b.Run(chromedp.Text("body", &bodyText, chromedp.NodeVisible, chromedp.ByQuery))
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(bodyText, text), nil
 }
