@@ -227,3 +227,12 @@ func (b *Browser) TextExists(text string) (bool, error) {
 	}
 	return strings.Contains(bodyText, text), nil
 }
+
+func (b *Browser) InnerText() (string, error) {
+	var bodyText string
+	err := b.Run(chromedp.Text("body", &bodyText, chromedp.NodeVisible, chromedp.ByQuery))
+	if err != nil {
+		return "", err
+	}
+	return bodyText, nil
+}
