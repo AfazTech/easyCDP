@@ -68,6 +68,7 @@ func (b *Browser) Run(actions ...chromedp.Action) error {
 	return chromedp.Run(b.ctx, actions...)
 }
 func (b *Browser) WaitForLoad(timeout time.Duration) (bool, error) {
+	time.Sleep(time.Second * 1)
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
@@ -88,6 +89,7 @@ func (b *Browser) WaitForLoad(timeout time.Duration) (bool, error) {
 }
 
 func (b *Browser) WaitForJSLoad(timeout time.Duration) (bool, error) {
+	time.Sleep(time.Second * 1)
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
