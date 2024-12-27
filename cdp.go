@@ -27,6 +27,7 @@ type Flag struct {
 func NewBrowser(options []Flag) *Browser {
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), handleFlags(options)...)
 	ctx, cancelFunc := chromedp.NewContext(allocCtx)
+	defer cancelFunc()
 	return &Browser{
 		ctx:    ctx,
 		cancel: cancelFunc,
@@ -57,13 +58,14 @@ func (b *Browser) Close() {
 	b.cancel()
 }
 func (b *Browser) ElementExists(selector string) (bool, error) {
-	var exists bool
-	err := b.Run(chromedp.Evaluate(fmt.Sprintf("document.querySelector('%s') !== null", selector), &exists))
+	var nodes []*cdp.Node
+	err := b.Run(chromedp.Nodes(selector, &nodes, chromedp.NodeVisible, chromedp.ByQuery))
 	if err != nil {
 		return false, err
 	}
-	return exists, nil
+	return len(nodes) > 0, nil
 }
+
 func (b *Browser) Run(actions ...chromedp.Action) error {
 	return chromedp.Run(b.ctx, actions...)
 }
@@ -237,4 +239,7 @@ func (b *Browser) InnerText() (string, error) {
 		return "", err
 	}
 	return bodyText, nil
+}
+func (b *Browser) GetContext() context.Context {
+	return b.ctx
 }

@@ -130,6 +130,29 @@ Saves the current cookies to a specified file in JSON format.
 #### `LoadCookies(filename string) error`
 Loads cookies from a specified file and sets them in the current browser session.
 
+#### `Text(selector string) (string, error)`
+Retrieves the visible text content of the specified element.
+
+#### `TextExists(text string) (bool, error)`
+Checks if the specified text exists in the body of the page.
+
+#### `InnerText() (string, error)`
+Retrieves the visible text content of the entire body of the page.
+
+#### `GetContext() context.Context`
+Returns the current context of the browser instance, allowing users to use it directly with chromedp methods.
+
+**Example usage of `GetContext`:**
+
+```go
+ctx := browser.GetContext()
+// Use ctx with chromedp methods
+err := chromedp.Run(ctx, chromedp.Navigate("https://another-example.com"))
+if err != nil {
+    log.Fatal(err)
+}
+```
+
 ### TODO:
 - [ ] Add more comprehensive error handling
 - [ ] Implement additional browser actions
