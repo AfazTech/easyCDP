@@ -25,6 +25,23 @@ type Flag struct {
 	Value interface{}
 }
 
+func NewBrowserWithContext(ctx context.Context, cancel context.CancelFunc) *Browser {
+	return &Browser{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+func NewRemoteBrowser(debuggingURL string) (*Browser, error) {
+
+	allocCtx, cancel := chromedp.NewRemoteAllocator(context.Background(), debuggingURL)
+
+	ctx, cancel := chromedp.NewContext(allocCtx)
+
+	return &Browser{
+		ctx:    ctx,
+		cancel: cancel,
+	}, nil
+}
 func NewBrowser(options []Flag) *Browser {
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), handleFlags(options)...)
 	ctx, cancelFunc := chromedp.NewContext(allocCtx)
