@@ -27,7 +27,6 @@ type Flag struct {
 func NewBrowser(options []Flag) *Browser {
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), handleFlags(options)...)
 	ctx, cancelFunc := chromedp.NewContext(allocCtx)
-	defer cancelFunc()
 	return &Browser{
 		ctx:    ctx,
 		cancel: cancelFunc,
