@@ -3,6 +3,7 @@ package cdp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -241,4 +242,31 @@ func (b *Browser) InnerText() (string, error) {
 }
 func (b *Browser) GetContext() context.Context {
 	return b.ctx
+}
+func (b *Browser) ClickTagWithText(tag, text string) error {
+	script := fmt.Sprintf(`
+		(function() {
+			var elements = document.querySelectorAll('%s');
+			for (var i = 0; i < elements.length; i++) {
+				if (elements[i].textContent.includes('%s')) {
+					elements[i].click();
+					return true;
+				}
+			}
+			return false;
+		})();
+	`, tag, text)
+	var found bool
+	err := b.Run(
+		chromedp.Evaluate(script, &found),
+	)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return errors.New(fmt.Sprintf("no %s tag containing text '%s' found", tag, text))
+	}
+
+	return nil
 }
