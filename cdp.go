@@ -270,3 +270,36 @@ func (b *Browser) ClickTagWithText(tag, text string) error {
 
 	return nil
 }
+
+func (b *Browser) WaitElementTagWithText(tag, text string, timeout time.Duration) (bool, error) {
+	script := fmt.Sprintf(`
+		(function() {
+			var elements = document.querySelectorAll('%s');
+			for (var i = 0; i < elements.length; i++) {
+				if (elements[i].textContent.includes('%s')) {
+					return true;
+				}
+			}
+			return false;
+		})();
+	`, tag, text)
+
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		var found bool
+		err := b.Run(
+			chromedp.Evaluate(script, &found),
+		)
+		if err != nil {
+			return false, err
+		}
+
+		if found {
+			return true, nil
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return false, fmt.Errorf("no %s tag containing text '%s' found within timeout", tag, text)
+}
