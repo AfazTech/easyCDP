@@ -33,7 +33,7 @@ func NewBrowserWithContext(ctx context.Context, cancel context.CancelFunc) *Brow
 }
 func NewRemoteBrowser(debuggingURL string) (*Browser, error) {
 
-	allocCtx, cancel := chromedp.NewRemoteAllocator(context.Background(), debuggingURL)
+	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), debuggingURL)
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
 
@@ -76,8 +76,17 @@ func (b *Browser) Close() {
 }
 func (b *Browser) ElementExists(selector string) (bool, error) {
 	var exists bool
-	script := fmt.Sprintf("document.querySelector('%s') !== null", selector)
-	err := b.Run(chromedp.Evaluate(script, &exists))
+	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`
+	(function() {
+			const element = document.querySelector('%s');
+			if (!element) {
+				return false;
+			}
+			return element.offsetParent !== null && 
+				   element.clientWidth > 0 && 
+				   element.clientHeight > 0;
+		})();
+	`, selector), &exists))
 	if err != nil {
 		return false, err
 	}
