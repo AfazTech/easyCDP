@@ -75,12 +75,22 @@ func (b *Browser) Close() {
 	b.cancel()
 }
 func (b *Browser) ElementExists(selector string) (bool, error) {
-	var nodes []*cdp.Node
-	err := b.Run(chromedp.Nodes(selector, &nodes, chromedp.NodeVisible, chromedp.ByQuery))
+	var exists bool
+	script := fmt.Sprintf("document.querySelector('%s') !== null", selector)
+	err := b.Run(chromedp.Evaluate(script, &exists))
 	if err != nil {
 		return false, err
 	}
-	return len(nodes) > 0, nil
+	return exists, nil
+}
+func (b *Browser) GetValue(selector string) (string, error) {
+	var value string
+	script := fmt.Sprintf("document.querySelector('%s').value", selector)
+	err := b.Run(chromedp.Evaluate(script, &value))
+	if err != nil {
+		return "", err
+	}
+	return value, nil
 }
 
 func (b *Browser) Run(actions ...chromedp.Action) error {
