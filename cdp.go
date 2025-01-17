@@ -78,14 +78,9 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 	var exists bool
 	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`
 	(function() {
-			const element = document.querySelector('%s');
-			if (!element) {
-				return false;
-			}
-			return element.offsetParent !== null && 
-				   element.clientWidth > 0 && 
-				   element.clientHeight > 0;
-		})();
+    const element = document.querySelector(%s);
+    return element !== null;
+})('%s');
 	`, selector), &exists))
 	if err != nil {
 		return false, err
