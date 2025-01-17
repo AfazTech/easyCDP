@@ -88,6 +88,15 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 	}
 	return exists, nil
 }
+func (b *Browser) GetPageSource() (string, error) {
+	var pageSource string
+	err := b.Run(chromedp.OuterHTML("html", &pageSource, chromedp.ByQuery))
+	if err != nil {
+		return "", err
+	}
+	return pageSource, nil
+}
+
 func (b *Browser) ElementIsVisible(selector string) (bool, error) {
 	var isDisplayed bool
 	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`
