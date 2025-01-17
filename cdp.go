@@ -80,7 +80,7 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 	(function() {
     const element = document.querySelector(%s);
     return element !== null;
-})('%s');
+});
 	`, selector), &exists))
 	if err != nil {
 		return false, err
