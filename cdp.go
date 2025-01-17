@@ -88,6 +88,22 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 	}
 	return exists, nil
 }
+func (b *Browser) ElementIsVisible(selector string) (bool, error) {
+	var isDisplayed bool
+	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`
+	(function() {
+		const element = document.querySelector('%s');
+		if (!element) {
+			return false; 
+		}
+		return element.offsetWidth > 0 && element.offsetHeight > 0;
+	})();
+	`, selector), &isDisplayed))
+	if err != nil {
+		return false, err
+	}
+	return isDisplayed, nil
+}
 func (b *Browser) GetValue(selector string) (string, error) {
 	var value string
 	script := fmt.Sprintf("document.querySelector('%s').value", selector)
