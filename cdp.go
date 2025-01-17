@@ -74,11 +74,12 @@ func (b *Browser) Screenshot(filename string) error {
 func (b *Browser) Close() {
 	b.cancel()
 }
+
 func (b *Browser) ElementExists(selector string) (bool, error) {
 	var exists bool
 	err := b.Run(chromedp.Evaluate(fmt.Sprintf(`
 	(function() {
-    const element = document.querySelector(%s);
+    const element = document.querySelector('%s');
     return element !== null;
 });
 	`, selector), &exists))
