@@ -58,15 +58,18 @@ func (b *Browser) Go(url string) error {
 
 func (b *Browser) CaptureNetworkRequests() ([]string, error) {
 	var requests []string
-	err := b.Run(network.Enable())
+
+	err := chromedp.Run(b.ctx, network.Enable())
 	if err != nil {
 		return nil, err
 	}
+
 	chromedp.ListenTarget(b.ctx, func(ev interface{}) {
 		if ev, ok := ev.(*network.EventRequestWillBeSent); ok {
 			requests = append(requests, ev.Request.URL)
 		}
 	})
+
 	return requests, nil
 }
 
