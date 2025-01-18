@@ -42,6 +42,7 @@ func NewRemoteBrowser(debuggingURL string) (*Browser, error) {
 		cancel: cancel,
 	}, nil
 }
+
 func NewBrowser(options []Flag) *Browser {
 	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), handleFlags(options)...)
 	ctx, cancelFunc := chromedp.NewContext(allocCtx)
@@ -53,6 +54,20 @@ func NewBrowser(options []Flag) *Browser {
 
 func (b *Browser) Go(url string) error {
 	return b.Run(chromedp.Navigate(url))
+}
+
+func (b *Browser) CaptureNetworkRequests() ([]string, error) {
+	var requests []string
+	err := b.Run(network.Enable())
+	if err != nil {
+		return nil, err
+	}
+	chromedp.ListenTarget(b.ctx, func(ev interface{}) {
+		if ev, ok := ev.(*network.EventRequestWillBeSent); ok {
+			requests = append(requests, ev.Request.URL)
+		}
+	})
+	return requests, nil
 }
 
 func handleFlags(flags []Flag) []chromedp.ExecAllocatorOption {
