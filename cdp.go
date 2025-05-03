@@ -31,6 +31,14 @@ func NewBrowserWithContext(ctx context.Context, cancel context.CancelFunc) *Brow
 		cancel: cancel,
 	}
 }
+func (b *Browser) QueryNodes(selector string) ([]*cdp.Node, error) {
+	var nodes []*cdp.Node
+	err := b.Run(chromedp.Nodes(selector, &nodes, chromedp.ByQueryAll))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query nodes: %w", err)
+	}
+	return nodes, nil
+}
 func NewRemoteBrowser(debuggingURL string) (*Browser, error) {
 
 	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), debuggingURL)
