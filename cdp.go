@@ -89,6 +89,34 @@ func (b *Browser) CaptureNetworkRequests(timeout time.Duration) ([]*network.Even
 	return capturedRequests, nil
 }
 
+func (b *Browser) CaptureNetworkRequestsStream() (chan *network.EventRequestWillBeSent, chan error, error) {
+	reqChan := make(chan *network.EventRequestWillBeSent, 100)
+	errChan := make(chan error, 10)
+
+	err := b.Run(network.Enable())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to enable network events: %w", err)
+	}
+
+	chromedp.ListenTarget(b.ctx, func(ev interface{}) {
+		switch e := ev.(type) {
+		case *network.EventRequestWillBeSent:
+			select {
+			case reqChan <- e:
+			default:
+				errChan <- fmt.Errorf("request channel full, dropping request: %s", e.Request.URL)
+			}
+		case *network.EventLoadingFailed:
+			select {
+			case errChan <- fmt.Errorf("request failed: %s (%s)", e.ErrorText, e.RequestID.String()):
+			default:
+			}
+		}
+	})
+
+	return reqChan, errChan, nil
+}
+
 func handleFlags(flags []Flag) []chromedp.ExecAllocatorOption {
 	opt := append([]chromedp.ExecAllocatorOption{}, chromedp.DefaultExecAllocatorOptions[:]...)
 	for _, flag := range flags {
