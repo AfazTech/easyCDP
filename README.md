@@ -48,30 +48,44 @@ import (
 )
 
 func main() {
-	flags := []easyCDP.Flag{
+	browser := easyCDP.NewBrowser([]easyCDP.Flag{
 		{Key: "headless", Value: false},
-	}
-	browser := easyCDP.NewBrowser(flags)
-
+	})
 	defer browser.CloseBrowser()
 
-	tab1, err := browser.NewTab()
-	err = tab1.Navigate("https://news.ycombinator.com")
+	tab, err := browser.NewTab()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create tab: %v", err)
 	}
 
-	visible, err := tab1.WaitVisible("a", 5*time.Second)
-	if err != nil || !visible {
+	if err := tab.Navigate("https://news.ycombinator.com"); err != nil {
+		log.Fatalf("failed to navigate: %v", err)
+	}
+
+	loaded, err := tab.WaitForLoad(15 * time.Second)
+	if err != nil {
+		log.Fatalf("load error: %v", err)
+	}
+	if !loaded {
+		log.Fatal("page did not finish loading")
+	}
+
+	selector := `a[href="news"]`
+	visible, err := tab.WaitVisible(selector, 5*time.Second)
+	if err != nil {
+		log.Fatalf("wait visible error: %v", err)
+	}
+	if !visible {
 		log.Fatal("element not visible")
 	}
 
-	text, err := tab1.Text(`a[href="news"]`)
+	text, err := tab.Text(selector)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("text extract error: %v", err)
 	}
 	log.Println("Tag Text:", text)
 }
+
 ```
 
 ## Methods
