@@ -16,7 +16,7 @@ It provides a clean and easy-to-use API for browser automation tasks.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Features](#features)
+- [Methods](#methods)
 - [TODO](#todo)
 - [Contributing](#contributing)
 - [License](#license)
@@ -67,24 +67,63 @@ func main() {
 	}
 
 	text, err := tab1.Text(`a[href="news"]`)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Tag Text:", text)
 }
-
 ```
 
-## Features
+## Methods
 
-* Open and manage tabs
-* Navigate pages
-* Click elements and send keys
-* Take screenshots of full page or specific elements
-* Check if elements exist or are visible
-* Wait for elements or page load
-* Evaluate JavaScript expressions
+* `AttachContext(ctx context.Context, cancel context.CancelFunc) *Browser`
+* `NewBrowser(options []Flag) *Browser`
+* `NewRemoteBrowser(debuggingURL string) (*Browser, error)`
+* `(*Browser) CaptureNetworkRequests(timeout time.Duration) ([]*network.EventRequestWillBeSent, error)`
+* `(*Browser) CaptureNetworkRequestsStream() (chan *network.EventRequestWillBeSent, chan error, error)`
+* `(*Browser) Clear(selector string) error`
+* `(*Browser) Click(selector string) error`
+* `(*Browser) ClickIfExists(selector string) (bool, error)`
+* `(*Browser) ClickTagWithText(tag, text string) error`
+* `(*Browser) CloseBrowser()`
+* `(*Browser) CloseTab() error`
+* `(*Browser) ElementExists(selector string) (bool, error)`
+* `(*Browser) ElementIsVisible(selector string) (bool, error)`
+* `(*Browser) Evaluate(expression string, res interface{}) error`
+* `(*Browser) Focus(selector string) error`
+* `(*Browser) GetAttribute(selector, attr string) (string, error)`
+* `(*Browser) GetContext() context.Context`
+* `(*Browser) GetCookies() ([]*network.Cookie, error)`
+* `(*Browser) GetPageSource() (string, error)`
+* `(*Browser) GetTab(tabID target.ID) (*Browser, error)`
+* `(*Browser) GetTabs() ([]*target.Info, error)`
+* `(*Browser) GetUrl() (string, error)`
+* `(*Browser) GetValue(selector string) (string, error)`
+* `(*Browser) InnerText() (string, error)`
+* `(*Browser) LoadCookies(filename string) error`
+* `(*Browser) Navigate(url string) error`
+* `(*Browser) NewTab() (*Browser, error)`
+* `(*Browser) Reload() error`
+* `(*Browser) Run(actions ...chromedp.Action) error`
+* `(*Browser) SaveCookies(filename string) error`
+* `(*Browser) Screenshot(filename string) error`
+* `(*Browser) ScreenshotElement(selector string, filename string) error`
+* `(*Browser) ScrollIntoView(selector string) error`
+* `(*Browser) ScrollTo(selector string) error`
+* `(*Browser) SendKeys(selector, keys string) error`
+* `(*Browser) SetContext(ctx context.Context, cancel context.CancelFunc)`
+* `(*Browser) SetInnerHTML(selector string, html string) error`
+* `(*Browser) SetValue(selector, value string) error`
+* `(*Browser) SwitchTab(tabID target.ID) error`
+* `(*Browser) Text(selector string) (string, error)`
+* `(*Browser) TextExists(text string) (bool, error)`
+* `(*Browser) WaitAndClick(selector string, timeout time.Duration) error`
+* `(*Browser) WaitElementTagWithText(tag, text string, timeout time.Duration) (bool, error)`
+* `(*Browser) WaitExists(selector string, timeout time.Duration) (bool, error)`
+* `(*Browser) WaitForJSLoad(timeout time.Duration) (bool, error)`
+* `(*Browser) WaitForLoad(timeout time.Duration) (bool, error)`
+* `(*Browser) WaitNotVisible(selector string, timeout time.Duration) (bool, error)`
+* `(*Browser) WaitVisible(selector string, timeout time.Duration) (bool, error)`
 
 ## TODO
 
