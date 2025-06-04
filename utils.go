@@ -1,4 +1,4 @@
-package cdp
+package easyCDP
 
 import (
 	"os"
@@ -17,6 +17,14 @@ func HandleFlags(flags []Flag) []chromedp.ExecAllocatorOption {
 func (b *Browser) Screenshot(filename string) error {
 	var buf []byte
 	err := b.Run(chromedp.Screenshot("html", &buf, chromedp.NodeVisible, chromedp.ByQuery))
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, buf, 0644)
+}
+func (b *Browser) ScreenshotElement(selector string, filename string) error {
+	var buf []byte
+	err := b.Run(chromedp.Screenshot(selector, &buf, chromedp.NodeVisible, chromedp.ByQuery))
 	if err != nil {
 		return err
 	}

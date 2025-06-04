@@ -1,4 +1,4 @@
-package cdp
+package easyCDP
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ func (b *Browser) Reload() error {
 
 func (b *Browser) GetUrl() (string, error) {
 	var url string
-	err := chromedp.Run(b.GetContext(),
+	err := b.Run(
 		chromedp.Location(&url),
 	)
 	if err != nil {

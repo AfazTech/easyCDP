@@ -1,4 +1,4 @@
-package cdp
+package easyCDP
 
 import (
 	"context"
@@ -49,9 +49,10 @@ func (b *Browser) CloseTab() error {
 
 	return chromedp.Run(b.GetContext(), page.Close())
 }
-func (b *Browser) CancelContext() {
+func (b *Browser) CloseBrowser() {
 	if b.cancel != nil {
 		b.cancel()
+		b.cancel = nil
 	}
 }
 

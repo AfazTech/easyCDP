@@ -1,8 +1,9 @@
-package cdp
+package easyCDP
 
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/chromedp/chromedp"
 )
@@ -10,13 +11,15 @@ import (
 func (b *Browser) Click(selector string) error {
 	return b.Run(chromedp.Click(selector, chromedp.ByQuery))
 }
-func (b *Browser) SendKeys(selector string, keys string) error {
 
+func (b *Browser) SendKeys(selector, keys string) error {
 	return b.Run(chromedp.SendKeys(selector, keys, chromedp.ByQuery))
 }
-func (b *Browser) SetValue(selector string, value string) error {
+
+func (b *Browser) SetValue(selector, value string) error {
 	return b.Run(chromedp.SetValue(selector, value, chromedp.ByQuery))
 }
+
 func (b *Browser) Evaluate(expression string, res interface{}) error {
 	return b.Run(chromedp.Evaluate(expression, res))
 }
@@ -29,6 +32,7 @@ func (b *Browser) Text(selector string) (string, error) {
 	}
 	return textContent, nil
 }
+
 func (b *Browser) TextExists(text string) (bool, error) {
 	var bodyText string
 	err := b.Run(chromedp.Text("body", &bodyText, chromedp.NodeVisible, chromedp.ByQuery))
@@ -48,30 +52,25 @@ func (b *Browser) InnerText() (string, error) {
 }
 
 func (b *Browser) ClickTagWithText(tag, text string) error {
-	script := fmt.Sprintf(`
-		(function() {
-			var elements = document.querySelectorAll('%s');
-			for (var i = 0; i < elements.length; i++) {
-				if (elements[i].textContent.includes('%s')) {
-					elements[i].click();
-					return true;
-				}
+	script := fmt.Sprintf(`(function(){
+		var elements = document.querySelectorAll('%s');
+		for(var i=0; i<elements.length; i++){
+			if(elements[i].textContent.includes('%s')){
+				elements[i].click();
+				return true;
 			}
-			return false;
-		})();
-	`, tag, text)
+		}
+		return false;
+	})()`, tag, text)
+
 	var found bool
-	err := b.Run(
-		chromedp.Evaluate(script, &found),
-	)
+	err := b.Run(chromedp.Evaluate(script, &found))
 	if err != nil {
 		return err
 	}
-
 	if !found {
 		return fmt.Errorf("no %s tag containing text '%s' found", tag, text)
 	}
-
 	return nil
 }
 
@@ -85,11 +84,84 @@ func (b *Browser) GetPageSource() (string, error) {
 }
 
 func (b *Browser) GetValue(selector string) (string, error) {
+	script := fmt.Sprintf(`(function(){
+		var el = document.querySelector('%s');
+		if(!el) return null;
+		return el.value;
+	})()`, selector)
+
+	var value *string
+	err := b.Run(chromedp.Evaluate(script, &value))
+	if err != nil {
+		return "", err
+	}
+	if value == nil {
+		return "", fmt.Errorf("element '%s' not found or has no value", selector)
+	}
+	return *value, nil
+}
+
+func (b *Browser) Clear(selector string) error {
+	return b.Run(chromedp.SetValue(selector, "", chromedp.ByQuery))
+}
+
+func (b *Browser) ClickIfExists(selector string) (bool, error) {
+	exists, err := b.WaitExists(selector, 2*time.Second)
+	if err != nil || !exists {
+		return false, err
+	}
+	err = b.Run(chromedp.Click(selector, chromedp.ByQuery))
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (b *Browser) GetAttribute(selector, attr string) (string, error) {
 	var value string
-	script := fmt.Sprintf("document.querySelector('%s').value", selector)
+	script := fmt.Sprintf(`
+		(function(){
+			const el = document.querySelector('%s');
+			return el ? el.getAttribute('%s') : null;
+		})()
+	`, selector, attr)
 	err := b.Run(chromedp.Evaluate(script, &value))
 	if err != nil {
 		return "", err
 	}
 	return value, nil
+}
+
+func (b *Browser) ScrollTo(selector string) error {
+	script := fmt.Sprintf(`
+		(function(){
+			const el = document.querySelector('%s');
+			if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
+		})()
+	`, selector)
+	return b.Run(chromedp.Evaluate(script, nil))
+}
+
+func (b *Browser) WaitAndClick(selector string, timeout time.Duration) error {
+	exists, err := b.WaitExists(selector, timeout)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("element %s not found within timeout", selector)
+	}
+	return b.Run(chromedp.Click(selector, chromedp.ByQuery))
+}
+
+func (b *Browser) Focus(selector string) error {
+	return b.Run(chromedp.Focus(selector))
+}
+
+func (b *Browser) SetInnerHTML(selector string, html string) error {
+	script := fmt.Sprintf(`document.querySelector('%s').innerHTML = %q`, selector, html)
+	return b.Run(chromedp.Evaluate(script, nil))
+}
+
+func (b *Browser) ScrollIntoView(selector string) error {
+	return b.Run(chromedp.ScrollIntoView(selector))
 }

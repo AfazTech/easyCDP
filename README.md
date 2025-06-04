@@ -1,40 +1,41 @@
-# cdp
-## cdp is a small project aimed at simplifying browser automation using the chromedp library in Go.
+# easyCDP
 
-**If this project is helpful to you, you may wish to give it a** :star2: **to support future updates and feature additions!**
+## Overview
 
-### Table of contents
-- [Features](#features)
-- [Prerequisites](#prerequisites)
+easyCDP is a lightweight and simple Go library for controlling headless Chrome using the Chrome DevTools Protocol (CDP) via chromedp.  
+It provides a clean and easy-to-use API for browser automation tasks.
+
+## Donate
+
+<a href="http://www.coffeete.ir/afaz">
+  <img src="http://www.coffeete.ir/images/buttons/lemonchiffon.png" width="260" />
+</a>
+
+## Table of Contents
+
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Methods](#methods)
-- [Todo](#todo)
+- [Features](#features)
+- [TODO](#todo)
+- [Contributing](#contributing)
 - [License](#license)
-- [Contributors](#contributors)
 
-### Features
-- Easy browser initialization with customizable flags
-- Check for element existence
-- Wait for page load completion
-- Check for text visibility on the page
-- Take screenshots of the current page
-- Manage cookies: get, save, and load cookies
-- Equipped with chromedp methods
-- Future improvements: Simplifying functions and supporting multiple browser instances
+## Requirements
 
-### Prerequisites
-- Chrome
+- Go 1.21 or higher  
+- Chrome or Chromium installed  
+- Any OS (tested on Arch Linux (I use arch btw))
 
-### Installation
-To install the `cdp` package, run the following command:
+## Installation
 
 ```bash
-go get github.com/imafaz/cdp
-```
+go get github.com/AfazTech/easyCDP
+````
 
-### Usage
-To use the `cdp` package, you can create a new browser instance and perform various actions. Below is a simple example:
+## Usage
+
+Here is a simple example of how to use easyCDP:
 
 ```go
 package main
@@ -43,123 +44,65 @@ import (
 	"log"
 	"time"
 
-	"github.com/imafaz/cdp"
+	"github.com/AfazTech/easyCDP"
 )
 
 func main() {
-	// Create a new browser 
-    
-    flags := []cdp.Flag{
-		{
-			Key:   "headless",
-			Value: false,
-		},
-		{
-			Key:   "guest",
-			Value: true,
-		},
+	flags := []easyCDP.Flag{
+		{Key: "headless", Value: false},
 	}
-	browser := cdp.NewBrowser(flags)
+	browser := easyCDP.NewBrowser(flags)
 
-	// Navigate to a URL
-	err := browser.Go("https://example.com")
+	defer browser.CloseBrowser()
+
+	tab1, err := browser.NewTab()
+	err = tab1.Navigate("https://news.ycombinator.com")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Wait for the page to load
-	_, err = browser.WaitForLoad(10 * time.Second)
+	visible, err := tab1.WaitVisible("a", 5*time.Second)
+	if err != nil || !visible {
+		log.Fatal("element not visible")
+	}
+
+	text, err := tab1.Text(`a[href="news"]`)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Take a screenshot
-	err = browser.Screenshot("screenshot.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Close the browser
-	browser.Close()
+	log.Println("Tag Text:", text)
 }
+
 ```
 
-### Methods
-#### `NewBrowser(options []Flag) *Browser`
-Creates a new browser instance with the specified options.
+## Features
 
-#### `Go(url string) error`
-Navigates to the specified URL.
+* Open and manage tabs
+* Navigate pages
+* Click elements and send keys
+* Take screenshots of full page or specific elements
+* Check if elements exist or are visible
+* Wait for elements or page load
+* Evaluate JavaScript expressions
 
-#### `Screenshot(filename string) error`
-Takes a screenshot of the current page and saves it to the specified filename.
+## TODO
 
-#### `Close()`
-Closes the browser instance.
+* Add full network interception support
+* Improve documentation and add more examples
+* Add more browser control features
 
-#### `ElementExists(selector string) (bool, error)`
-Checks if an element exists on the page.
+## Contributing
 
-#### `WaitForLoad(timeout time.Duration) (bool, error)`
-Waits for the page to load completely within the specified timeout.
+Contributions are welcome!
 
-#### `Click(selector string) error`
-Clicks on the specified element.
+1. Fork the repository
+2. Commit your changes (e.g. `git commit -m "Add feature"`)
+3. Push your branch (`git push origin feature-branch`)
+4. Open a Pull Request
 
-#### `SendKeys(selector string, keys string) error`
-Sends keys to the specified input field.
+Please add tests or update examples if applicable.
 
-#### `SetValue(selector string, value string) error`
-Sets the value of the specified input field.
+## License
 
-#### `Evaluate(expression string, res interface{}) error`
-Evaluates a JavaScript expression and stores the result in the provided variable.
-
-#### `WaitVisible(selector string, timeout time.Duration) (bool, error)`
-Waits for the specified element to become visible within the given timeout duration. Returns true if the element is visible, otherwise returns false.
-
-#### `Reload() error`
-Reloads the current page.
-
-#### `GetCookies() ([]*network.Cookie, error)`
-Retrieves the cookies from the current browser session.
-
-#### `SaveCookies(filename string) error`
-Saves the current cookies to a specified file in JSON format.
-
-#### `LoadCookies(filename string) error`
-Loads cookies from a specified file and sets them in the current browser session.
-
-#### `Text(selector string) (string, error)`
-Retrieves the visible text content of the specified element.
-
-#### `TextExists(text string) (bool, error)`
-Checks if the specified text exists in the body of the page.
-
-#### `InnerText() (string, error)`
-Retrieves the visible text content of the entire body of the page.
-
-#### `GetContext() context.Context`
-Returns the current context of the browser instance, allowing users to use it directly with chromedp methods.
-
-**Example usage of `GetContext`:**
-
-```go
-ctx := browser.GetContext()
-// Use ctx with chromedp methods
-err := chromedp.Run(ctx, chromedp.Navigate("https://another-example.com"))
-if err != nil {
-    log.Fatal(err)
-}
-```
-
-### TODO:
-- [ ] Add more comprehensive error handling
-- [ ] Implement additional browser actions
-- [ ] Improve documentation and examples
-
-### License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
-### Contributors
-Feel free to contribute to the project by submitting issues or pull requests!
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/AfazTech/easyCDP/blob/main/LICENSE) file for details.

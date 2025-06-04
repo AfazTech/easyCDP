@@ -1,4 +1,4 @@
-module github.com/imafaz/cdp
+module github.com/imafaz/easyCDP
 
 go 1.23.3
 

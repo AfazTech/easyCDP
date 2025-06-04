@@ -1,4 +1,4 @@
-package cdp
+package easyCDP
 
 import (
 	"context"
@@ -27,10 +27,10 @@ func (b *Browser) CaptureNetworkRequests(timeout time.Duration) ([]*network.Even
 	}
 
 	time.Sleep(timeout)
+	close(requests)
 
 	var capturedRequests []*network.EventRequestWillBeSent
-	for len(requests) > 0 {
-		req := <-requests
+	for req := range requests {
 		capturedRequests = append(capturedRequests, req)
 	}
 
