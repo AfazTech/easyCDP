@@ -5,9 +5,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 )
 
+func (b *Browser) SelectAll(selector string) ([]*cdp.Node, error) {
+	var nodes []*cdp.Node
+	err := b.Run(chromedp.Nodes(selector, &nodes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to select elements: %v", err)
+	}
+	return nodes, nil
+}
 func (b *Browser) Click(selector string) error {
 	return b.Run(chromedp.Click(selector, chromedp.ByQuery))
 }
