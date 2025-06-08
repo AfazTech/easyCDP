@@ -37,6 +37,9 @@ go get github.com/AfazTech/easyCDP
 
 Here is a simple example of how to use easyCDP:
 
+> All element selectors in easyCDP can be either **CSS selectors** or **XPath expressions**.  
+> XPath selectors should begin with `//` or `.//`, and they will be handled automatically.
+
 ```go
 package main
 

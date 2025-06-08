@@ -48,12 +48,22 @@ func (b *Browser) WaitElementTagWithText(tag, text string, timeout time.Duration
 }
 
 func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, error) {
-	script := fmt.Sprintf(`
-		(function() {
-			const el = document.querySelector('%s');
-			return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
-		})();
-	`, selector)
+	var script string
+	if isXPath(selector) {
+		script = fmt.Sprintf(`
+			(function() {
+				let el = document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
+			})();
+		`, selector)
+	} else {
+		script = fmt.Sprintf(`
+			(function() {
+				const el = document.querySelector('%s');
+				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
+			})();
+		`, selector)
+	}
 
 	ctx, cancel := context.WithTimeout(b.ctx, timeout)
 	defer cancel()
@@ -99,7 +109,7 @@ func (b *Browser) WaitForLoad(timeout time.Duration) (bool, error) {
 }
 
 func (b *Browser) WaitForJSLoad(timeout time.Duration) (bool, error) {
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second)
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
@@ -120,12 +130,22 @@ func (b *Browser) WaitForJSLoad(timeout time.Duration) (bool, error) {
 }
 
 func (b *Browser) ElementIsVisible(selector string) (bool, error) {
-	script := fmt.Sprintf(`
-		(function() {
-			const el = document.querySelector('%s');
-			return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
-		})();
-	`, selector)
+	var script string
+	if isXPath(selector) {
+		script = fmt.Sprintf(`
+			(function() {
+				let el = document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
+			})();
+		`, selector)
+	} else {
+		script = fmt.Sprintf(`
+			(function() {
+				const el = document.querySelector('%s');
+				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
+			})();
+		`, selector)
+	}
 
 	var isVisible bool
 	err := b.Run(chromedp.Evaluate(script, &isVisible))
@@ -133,11 +153,20 @@ func (b *Browser) ElementIsVisible(selector string) (bool, error) {
 }
 
 func (b *Browser) ElementExists(selector string) (bool, error) {
-	script := fmt.Sprintf(`
-		(function() {
-			return document.querySelector('%s') !== null;
-		})();
-	`, selector)
+	var script string
+	if isXPath(selector) {
+		script = fmt.Sprintf(`
+			(function() {
+				return document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue !== null;
+			})();
+		`, selector)
+	} else {
+		script = fmt.Sprintf(`
+			(function() {
+				return document.querySelector('%s') !== null;
+			})();
+		`, selector)
+	}
 
 	var exists bool
 	err := b.Run(chromedp.Evaluate(script, &exists))
@@ -147,8 +176,7 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 func (b *Browser) WaitExists(selector string, timeout time.Duration) (bool, error) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		var exists bool
-		err := b.Run(chromedp.Evaluate(fmt.Sprintf(`document.querySelector('%s') !== null`, selector), &exists))
+		exists, err := b.ElementExists(selector)
 		if err != nil {
 			return false, err
 		}
@@ -163,22 +191,22 @@ func (b *Browser) WaitExists(selector string, timeout time.Duration) (bool, erro
 func (b *Browser) WaitNotVisible(selector string, timeout time.Duration) (bool, error) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		var exists bool
-		err := b.Run(chromedp.Evaluate(fmt.Sprintf("document.querySelector('%s') !== null", selector), &exists))
+		exists, err := b.ElementExists(selector)
 		if err != nil {
 			return false, err
 		}
 		if !exists {
 			return true, nil
 		}
-		var isVisible bool
-		err = b.Run(chromedp.Evaluate(fmt.Sprintf("document.querySelector('%s').offsetWidth > 0 && document.querySelector('%s').offsetHeight > 0", selector, selector), &isVisible))
+
+		visible, err := b.ElementIsVisible(selector)
 		if err != nil {
 			return false, err
 		}
-		if !isVisible {
+		if !visible {
 			return true, nil
 		}
+
 		time.Sleep(100 * time.Millisecond)
 	}
 	return false, nil
