@@ -125,7 +125,6 @@ func main() {
 * `(*Browser) ClickIfExists(selector string) (bool, error)`
 * `(*Browser) ClickTagWithText(tag, text string) error`
 * `(*Browser) WaitAndClick(selector string, timeout time.Duration) error`
-* `(*Browser) Clear(selector string) error`
 * `(*Browser) SendKeys(selector, keys string) error`
 * `(*Browser) SetValue(selector, value string) error`
 * `(*Browser) SetInnerHTML(selector string, html string) error`

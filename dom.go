@@ -11,7 +11,7 @@ import (
 
 func (b *Browser) SelectAll(selector string) ([]*cdp.Node, error) {
 	var nodes []*cdp.Node
-	err := b.Run(chromedp.Nodes(selector, &nodes, resolveSelector(selector)))
+	err := b.Run(chromedp.Nodes(selector, &nodes, chromedp.ByQueryAll))
 	if err != nil {
 		return nil, fmt.Errorf("failed to select elements: %v", err)
 	}
@@ -116,10 +116,6 @@ func (b *Browser) GetValue(selector string) (string, error) {
 		return "", err
 	}
 	return value, nil
-}
-
-func (b *Browser) Clear(selector string) error {
-	return b.Run(chromedp.SetValue(selector, "", resolveSelector(selector)))
 }
 
 func (b *Browser) ClickIfExists(selector string) (bool, error) {
