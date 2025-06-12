@@ -24,7 +24,7 @@ func (b *Browser) WaitElementTagWithText(tag, text string, timeout time.Duration
 			}
 			return false;
 		})();
-	`, tag, string(textJSON))
+	`, tag, escapeJSString(string(textJSON)))
 
 	ctx, cancel := context.WithTimeout(b.ctx, timeout)
 	defer cancel()
@@ -55,14 +55,14 @@ func (b *Browser) WaitVisible(selector string, timeout time.Duration) (bool, err
 				let el = document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	} else {
 		script = fmt.Sprintf(`
 			(function() {
 				const el = document.querySelector('%s');
 				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	}
 
 	ctx, cancel := context.WithTimeout(b.ctx, timeout)
@@ -137,14 +137,14 @@ func (b *Browser) ElementIsVisible(selector string) (bool, error) {
 				let el = document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	} else {
 		script = fmt.Sprintf(`
 			(function() {
 				const el = document.querySelector('%s');
 				return el !== null && el.offsetWidth > 0 && el.offsetHeight > 0;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	}
 
 	var isVisible bool
@@ -159,13 +159,13 @@ func (b *Browser) ElementExists(selector string) (bool, error) {
 			(function() {
 				return document.evaluate('%s', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue !== null;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	} else {
 		script = fmt.Sprintf(`
 			(function() {
 				return document.querySelector('%s') !== null;
 			})();
-		`, selector)
+		`, escapeJSString(selector))
 	}
 
 	var exists bool

@@ -25,7 +25,7 @@ func (b *Browser) Screenshot(filename string) error {
 }
 func (b *Browser) ScreenshotElement(selector string, filename string) error {
 	var buf []byte
-	err := b.Run(chromedp.Screenshot(selector, &buf, chromedp.NodeVisible, resolveSelector(selector)))
+	err := b.Run(chromedp.Screenshot(selector, &buf, resolveSelector(selector)))
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (b *Browser) ScreenshotElement(selector string, filename string) error {
 }
 
 func resolveSelector(selector string) chromedp.QueryOption {
-	if strings.HasPrefix(selector, "/") || strings.HasPrefix(selector, "./") {
+	if isXPath(selector) {
 		return chromedp.BySearch
 	}
 	return chromedp.ByQuery
@@ -41,4 +41,12 @@ func resolveSelector(selector string) chromedp.QueryOption {
 
 func isXPath(selector string) bool {
 	return strings.HasPrefix(selector, "/") || strings.HasPrefix(selector, "./")
+}
+
+func escapeJSString(str string) string {
+	str = strings.ReplaceAll(str, `\`, `\\`)
+	str = strings.ReplaceAll(str, `'`, `\'`)
+	str = strings.ReplaceAll(str, "\n", `\n`)
+	str = strings.ReplaceAll(str, "\r", `\r`)
+	return str
 }
