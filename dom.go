@@ -11,7 +11,13 @@ import (
 
 func (b *Browser) SelectAll(selector string) ([]*cdp.Node, error) {
 	var nodes []*cdp.Node
-	err := b.Run(chromedp.Nodes(selector, &nodes, chromedp.ByQueryAll))
+	var selectBy chromedp.QueryOption
+	if isXPath(selector) {
+		selectBy = chromedp.BySearch
+	} else {
+		selectBy = chromedp.ByQueryAll
+	}
+	err := b.Run(chromedp.Nodes(selector, &nodes, selectBy))
 	if err != nil {
 		return nil, fmt.Errorf("failed to select elements: %v", err)
 	}
