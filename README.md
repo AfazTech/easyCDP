@@ -143,6 +143,7 @@ func main() {
 * `(*Browser) Screenshot(filename string) error`
 * `(*Browser) ScreenshotElement(selector string, filename string) error`
 * `(*Browser) Run(actions ...chromedp.Action) error`
+* `(*Browser) InnerHTML(selector string) (string, error)`
 
 ## TODO
 
