@@ -209,3 +209,13 @@ func (b *Browser) SetInnerHTML(selector string, html string) error {
 func (b *Browser) ScrollIntoView(selector string) error {
 	return b.Run(chromedp.ScrollIntoView(selector, resolveSelector(selector)))
 }
+
+func (b *Browser) InnerHTML(selector string) (string, error) {
+	var html string
+
+	err := b.Run(chromedp.InnerHTML(selector, &html, resolveSelector(selector)))
+	if err != nil {
+		return "", fmt.Errorf("failed to get innerHTML: %w", err)
+	}
+	return html, nil
+}
