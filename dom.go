@@ -124,18 +124,6 @@ func (b *Browser) GetValue(selector string) (string, error) {
 	return value, nil
 }
 
-func (b *Browser) ClickIfExists(selector string) (bool, error) {
-	exists, err := b.WaitExists(selector, 2*time.Second)
-	if err != nil || !exists {
-		return false, err
-	}
-	err = b.Run(chromedp.Click(selector, resolveSelector(selector)))
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 func (b *Browser) GetAttribute(selector, attr string) (string, error) {
 	var value string
 	var script string
@@ -159,26 +147,6 @@ func (b *Browser) GetAttribute(selector, attr string) (string, error) {
 		return "", err
 	}
 	return value, nil
-}
-
-func (b *Browser) ScrollTo(selector string) error {
-	var script string
-	if isXPath(selector) {
-		script = fmt.Sprintf(`
-			(function(){
-				let node = document.evaluate(%q, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-				if(node) node.scrollIntoView({behavior: "smooth", block: "center"});
-			})()
-		`, selector)
-	} else {
-		script = fmt.Sprintf(`
-			(function(){
-				let el = document.querySelector(%q);
-				if(el) el.scrollIntoView({behavior: "smooth", block: "center"});
-			})()
-		`, selector)
-	}
-	return b.Run(chromedp.Evaluate(script, nil))
 }
 
 func (b *Browser) WaitAndClick(selector string, timeout time.Duration) error {
@@ -224,4 +192,24 @@ func (b *Browser) InnerHTML(selector string) (string, error) {
 		return "", fmt.Errorf("failed to get innerHTML: %w", err)
 	}
 	return html, nil
+}
+
+func (b *Browser) Scroll(from int, to int, intervalMs int, steps int) error {
+	if from == to || steps <= 0 {
+		return nil
+	}
+	script := fmt.Sprintf(`
+		(() => {
+			let from = %d;
+			let to = %d;
+			let step = (to - from) / %d;
+			let i = 0;
+			let interval = setInterval(() => {
+				window.scrollTo(0, from + step * i);
+				i++;
+				if (i > %d) clearInterval(interval);
+			}, %d);
+		})()
+	`, from, to, steps, steps, intervalMs)
+	return b.Run(chromedp.Evaluate(script, nil))
 }
